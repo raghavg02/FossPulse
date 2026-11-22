@@ -2,12 +2,17 @@ package io.github.raghavg02.fosspulse
 
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
+import io.github.raghavg02.fosspulse.app.di.initKoin
 
-fun main() = application {
-    Window(
-        onCloseRequest = ::exitApplication,
-        title = "FossPulse",
-    ) {
-        App()
+fun main() {
+    initKoin()
+
+    application {
+        Window(
+            onCloseRequest = ::exitApplication,
+            title = "FossPulse",
+        ) {
+            App()
+        }
     }
 }
