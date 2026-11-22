@@ -71,6 +71,11 @@ fun DashboardContent(
                         )
                     }
                     BrutalButton(
+                        text = "SCAN",
+                        onClick = { onEvent(DashboardUiEvent.ShowScanner) },
+                        type = BrutalButtonType.SECONDARY
+                    )
+                    BrutalButton(
                         text = if (uiState.isRefreshing) "..." else "SYNC",
                         onClick = { onEvent(DashboardUiEvent.RefreshAll) },
                         type = BrutalButtonType.SECONDARY,
@@ -128,7 +133,8 @@ fun DashboardContent(
                     }
                 } else if (uiState.filteredRepos.isEmpty()) {
                     EmptyWatchlistState(
-                        onAddClick = { onEvent(DashboardUiEvent.ShowAddRepo) }
+                        onAddClick = { onEvent(DashboardUiEvent.ShowAddRepo) },
+                        onScanClick = { onEvent(DashboardUiEvent.ShowScanner) }
                     )
                 } else {
                     LazyColumn(
@@ -215,6 +221,7 @@ fun PlatformFilterRow(
 @Composable
 fun EmptyWatchlistState(
     onAddClick: () -> Unit,
+    onScanClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -241,11 +248,18 @@ fun EmptyWatchlistState(
                     color = BrutalTheme.colors.muted
                 )
                 Spacer(modifier = Modifier.height(8.dp))
-                BrutalButton(
-                    text = "ADD GITHUB REPOSITORY",
-                    onClick = onAddClick,
-                    type = BrutalButtonType.PRIMARY
-                )
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    BrutalButton(
+                        text = "SCAN APPS",
+                        onClick = onScanClick,
+                        type = BrutalButtonType.SECONDARY
+                    )
+                    BrutalButton(
+                        text = "ADD REPO",
+                        onClick = onAddClick,
+                        type = BrutalButtonType.PRIMARY
+                    )
+                }
             }
         }
     }

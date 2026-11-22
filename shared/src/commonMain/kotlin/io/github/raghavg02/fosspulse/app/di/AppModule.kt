@@ -31,6 +31,19 @@ val appModule = module {
         GitHubApiServiceImpl()
     }
 
+    single {
+        io.github.raghavg02.fosspulse.domain.usecase.CheckHourlyReleaseUpdatesUseCase(
+            repoRepository = get(),
+            gitHubApiService = get()
+        )
+    }
+
+    single {
+        io.github.raghavg02.fosspulse.domain.usecase.RunDailyVersionAuditUseCase(
+            repoRepository = get()
+        )
+    }
+
     viewModel {
         DashboardViewModel(
             repoRepository = get(),
@@ -40,6 +53,13 @@ val appModule = module {
 
     viewModel {
         AddRepoViewModel(
+            repoRepository = get(),
+            gitHubApiService = get()
+        )
+    }
+
+    viewModel {
+        io.github.raghavg02.fosspulse.ui.scanner.InstalledAppsScannerViewModel(
             repoRepository = get(),
             gitHubApiService = get()
         )

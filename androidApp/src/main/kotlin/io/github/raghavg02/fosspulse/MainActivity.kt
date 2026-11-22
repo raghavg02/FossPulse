@@ -14,6 +14,7 @@ class MainActivity : ComponentActivity() {
         appContext = applicationContext
 
         initKoin()
+        io.github.raghavg02.fosspulse.worker.WorkScheduler.scheduleBackgroundWorkers(this)
 
         setContent {
             App()

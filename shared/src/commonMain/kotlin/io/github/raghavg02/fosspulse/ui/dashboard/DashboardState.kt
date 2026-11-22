@@ -32,6 +32,7 @@ data class DashboardUiState(
     val rateLimitRemaining: Int? = null,
     val selectedRepoForDetail: TrackedRepoItem? = null,
     val isAddRepoSheetVisible: Boolean = false,
+    val isScannerVisible: Boolean = false,
     val errorMessage: String? = null
 ) {
     val filteredRepos: List<TrackedRepoItem>
@@ -49,6 +50,8 @@ sealed interface DashboardUiEvent {
     data object DismissDetail : DashboardUiEvent
     data object ShowAddRepo : DashboardUiEvent
     data object DismissAddRepo : DashboardUiEvent
+    data object ShowScanner : DashboardUiEvent
+    data object DismissScanner : DashboardUiEvent
     data class DeleteRepo(val repoId: String) : DashboardUiEvent
     data class RefreshSingleRepo(val repoId: String) : DashboardUiEvent
 }

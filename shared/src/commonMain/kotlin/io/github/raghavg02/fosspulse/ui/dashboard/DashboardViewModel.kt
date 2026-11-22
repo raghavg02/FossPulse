@@ -54,6 +54,8 @@ class DashboardViewModel(
             is DashboardUiEvent.DismissDetail -> _uiState.update { it.copy(selectedRepoForDetail = null) }
             is DashboardUiEvent.ShowAddRepo -> _uiState.update { it.copy(isAddRepoSheetVisible = true) }
             is DashboardUiEvent.DismissAddRepo -> _uiState.update { it.copy(isAddRepoSheetVisible = false) }
+            is DashboardUiEvent.ShowScanner -> _uiState.update { it.copy(isScannerVisible = true) }
+            is DashboardUiEvent.DismissScanner -> _uiState.update { it.copy(isScannerVisible = false) }
             is DashboardUiEvent.DeleteRepo -> deleteRepo(event.repoId)
             is DashboardUiEvent.RefreshSingleRepo -> refreshSingleRepo(event.repoId)
         }
