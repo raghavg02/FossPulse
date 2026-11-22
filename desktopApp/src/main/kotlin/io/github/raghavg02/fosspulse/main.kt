@@ -6,6 +6,7 @@ import io.github.raghavg02.fosspulse.app.di.initKoin
 
 fun main() {
     initKoin()
+    DesktopScheduler.startBackgroundScheduler()
 
     application {
         Window(

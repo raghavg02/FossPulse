@@ -32,9 +32,13 @@ actual class GoogleAuthProvider actual constructor(
         }
 
         try {
-            // OAuth authorization endpoint for Google Drive appdata scope
-            // We launch the browser for the OAuth consent flow or handle direct token
-            val clientId = secureStorage.get("google_oauth_client_id") ?: "fosspulse-mobile.apps.googleusercontent.com"
+            val clientId = secureStorage.get("google_oauth_client_id")
+            if (clientId.isNullOrBlank()) {
+                return@withContext Result.failure(
+                    IllegalStateException("Google OAuth Client ID is not configured. Please enter your OAuth Client ID below before connecting.")
+                )
+            }
+
             val authUri = Uri.parse("https://accounts.google.com/o/oauth2/v2/auth").buildUpon()
                 .appendQueryParameter("client_id", clientId)
                 .appendQueryParameter("response_type", "token")

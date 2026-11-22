@@ -23,6 +23,7 @@ data class SettingsUiState(
     val isDriveSyncing: Boolean = false,
     val driveSyncMessage: String? = null,
     val lastSyncedTime: String? = null,
+    val googleClientId: String = "",
     val modelStatus: LlmModelStatus = LlmModelStatus.NotDownloaded,
     val formattedModelSize: String = ""
 )
@@ -38,6 +39,7 @@ class SettingsViewModel(
     companion object {
         const val GITHUB_PAT_KEY = "github_personal_access_token"
         const val LAST_SYNC_KEY = "google_drive_last_synced_at"
+        const val GOOGLE_CLIENT_ID_KEY = "google_oauth_client_id"
     }
 
     private val _uiState = MutableStateFlow(SettingsUiState())
@@ -52,9 +54,11 @@ class SettingsViewModel(
         val savedPat = secureStorage.get(GITHUB_PAT_KEY) ?: ""
         val token = googleAuthProvider.getSavedAccessToken()
         val lastSync = secureStorage.get(LAST_SYNC_KEY)
+        val savedClientId = secureStorage.get(GOOGLE_CLIENT_ID_KEY) ?: ""
 
         _uiState.value = _uiState.value.copy(
             githubPat = savedPat,
+            googleClientId = savedClientId,
             isDriveConnected = !token.isNullOrBlank(),
             lastSyncedTime = lastSync,
             formattedModelSize = llmModelManager.getFormattedModelSize()
@@ -96,6 +100,21 @@ class SettingsViewModel(
         secureStorage.remove(GITHUB_PAT_KEY)
         _uiState.value = _uiState.value.copy(githubPat = "", patMessage = "Token cleared")
         testPat(null)
+    }
+
+    fun onGoogleClientIdChanged(clientId: String) {
+        _uiState.value = _uiState.value.copy(googleClientId = clientId, driveSyncMessage = null)
+    }
+
+    fun saveGoogleClientId() {
+        val cid = _uiState.value.googleClientId.trim()
+        if (cid.isNotBlank()) {
+            secureStorage.save(GOOGLE_CLIENT_ID_KEY, cid)
+            _uiState.value = _uiState.value.copy(driveSyncMessage = "OAuth Client ID saved")
+        } else {
+            secureStorage.remove(GOOGLE_CLIENT_ID_KEY)
+            _uiState.value = _uiState.value.copy(driveSyncMessage = "OAuth Client ID cleared")
+        }
     }
 
     private fun testPat(pat: String?) {

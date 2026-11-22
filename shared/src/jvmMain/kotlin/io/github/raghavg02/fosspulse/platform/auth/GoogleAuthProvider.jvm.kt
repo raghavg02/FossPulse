@@ -27,7 +27,12 @@ actual class GoogleAuthProvider actual constructor(
         }
 
         try {
-            val clientId = secureStorage.get("google_oauth_client_id") ?: "fosspulse-desktop.apps.googleusercontent.com"
+            val clientId = secureStorage.get("google_oauth_client_id")
+            if (clientId.isNullOrBlank()) {
+                return@withContext Result.failure(
+                    IllegalStateException("Google OAuth Client ID is not configured. Please enter your OAuth Client ID below before connecting.")
+                )
+            }
             val authUrl = "https://accounts.google.com/o/oauth2/v2/auth?" +
                     "client_id=$clientId&" +
                     "response_type=token&" +

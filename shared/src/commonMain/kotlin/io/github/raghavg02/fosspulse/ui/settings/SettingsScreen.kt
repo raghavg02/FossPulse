@@ -173,21 +173,49 @@ fun SettingsScreen(
                     }
 
                     if (!state.driveSyncMessage.isNullOrBlank()) {
-                        Text(
-                            text = state.driveSyncMessage!!,
-                            style = BrutalTheme.typography.MonoSmall,
-                            color = BrutalTheme.colors.ink
-                        )
+                        BrutalCard(
+                            backgroundColor = BrutalTheme.colors.canvas,
+                            modifier = Modifier.fillMaxWidth(),
+                            contentPadding = 10.dp
+                        ) {
+                            val isError = "not configured" in state.driveSyncMessage!!.lowercase() ||
+                                    "error" in state.driveSyncMessage!!.lowercase() ||
+                                    "failed" in state.driveSyncMessage!!.lowercase()
+                            Text(
+                                text = state.driveSyncMessage!!,
+                                style = BrutalTheme.typography.MonoSmall,
+                                color = if (isError) BrutalTheme.colors.error else BrutalTheme.colors.ink
+                            )
+                        }
                     }
 
                     if (!state.isDriveConnected) {
-                        BrutalButton(
-                            text = if (state.isDriveSyncing) "CONNECTING..." else "CONNECT GOOGLE DRIVE",
-                            onClick = { viewModel.connectDrive() },
-                            type = BrutalButtonType.PRIMARY,
-                            enabled = !state.isDriveSyncing,
+                        BrutalTextField(
+                            value = state.googleClientId,
+                            onValueChange = { viewModel.onGoogleClientIdChanged(it) },
+                            placeholder = "your-app.apps.googleusercontent.com",
+                            label = "GOOGLE OAUTH CLIENT ID",
                             modifier = Modifier.fillMaxWidth()
                         )
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            BrutalButton(
+                                text = "SAVE CLIENT ID",
+                                onClick = { viewModel.saveGoogleClientId() },
+                                type = BrutalButtonType.SECONDARY,
+                                modifier = Modifier.weight(1f)
+                            )
+                            BrutalButton(
+                                text = if (state.isDriveSyncing) "CONNECTING..." else "CONNECT GOOGLE DRIVE",
+                                onClick = { viewModel.connectDrive() },
+                                type = BrutalButtonType.PRIMARY,
+                                enabled = !state.isDriveSyncing,
+                                modifier = Modifier.weight(1.5f)
+                            )
+                        }
                     } else {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
