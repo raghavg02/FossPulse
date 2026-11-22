@@ -178,5 +178,9 @@ class DashboardViewModelTest {
         ): NetworkResult<ReleaseInfo> {
             return nextResult ?: NetworkResult.Error("No mock configured")
         }
+
+        override suspend fun getRateLimit(personalAccessToken: String?): NetworkResult<Int> {
+            return NetworkResult.Success(60)
+        }
     }
 }

@@ -14,7 +14,8 @@ import kotlinx.coroutines.launch
 
 class DashboardViewModel(
     private val repoRepository: RepoRepository,
-    private val gitHubApiService: GitHubApiService
+    private val gitHubApiService: GitHubApiService,
+    private val secureStorage: io.github.raghavg02.fosspulse.platform.storage.SecureStorage = io.github.raghavg02.fosspulse.platform.storage.SecureStorage()
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(DashboardUiState())
@@ -56,6 +57,8 @@ class DashboardViewModel(
             is DashboardUiEvent.DismissAddRepo -> _uiState.update { it.copy(isAddRepoSheetVisible = false) }
             is DashboardUiEvent.ShowScanner -> _uiState.update { it.copy(isScannerVisible = true) }
             is DashboardUiEvent.DismissScanner -> _uiState.update { it.copy(isScannerVisible = false) }
+            is DashboardUiEvent.ShowSettings -> _uiState.update { it.copy(isSettingsVisible = true) }
+            is DashboardUiEvent.DismissSettings -> _uiState.update { it.copy(isSettingsVisible = false) }
             is DashboardUiEvent.DeleteRepo -> deleteRepo(event.repoId)
             is DashboardUiEvent.RefreshSingleRepo -> refreshSingleRepo(event.repoId)
         }
@@ -102,12 +105,14 @@ class DashboardViewModel(
         includePrereleases: Boolean,
         repoId: String
     ) {
+        val pat = secureStorage.get("github_personal_access_token")
         when (val result = gitHubApiService.getLatestRelease(
             owner = owner,
             repo = repoName,
             assetRegex = assetRegex,
             etag = etag,
-            includePrereleases = includePrereleases
+            includePrereleases = includePrereleases,
+            personalAccessToken = pat
         )) {
             is NetworkResult.Success -> {
                 repoRepository.updateLatestReleaseCheck(

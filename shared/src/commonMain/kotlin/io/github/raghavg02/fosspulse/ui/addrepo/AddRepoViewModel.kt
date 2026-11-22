@@ -36,7 +36,8 @@ data class AddRepoUiState(
 
 class AddRepoViewModel(
     private val repoRepository: RepoRepository,
-    private val gitHubApiService: GitHubApiService
+    private val gitHubApiService: GitHubApiService,
+    private val secureStorage: io.github.raghavg02.fosspulse.platform.storage.SecureStorage = io.github.raghavg02.fosspulse.platform.storage.SecureStorage()
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(AddRepoUiState())
@@ -130,11 +131,13 @@ class AddRepoViewModel(
             repoRepository.saveRepo(trackedRepo)
 
             // Trigger immediate initial fetch
+            val pat = secureStorage.get("github_personal_access_token")
             when (val result = gitHubApiService.getLatestRelease(
                 owner = owner,
                 repo = repoName,
                 assetRegex = currentState.assetRegex,
-                includePrereleases = currentState.includePrereleases
+                includePrereleases = currentState.includePrereleases,
+                personalAccessToken = pat
             )) {
                 is NetworkResult.Success -> {
                     repoRepository.updateLatestReleaseCheck(

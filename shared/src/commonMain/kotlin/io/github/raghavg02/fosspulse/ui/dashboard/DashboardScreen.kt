@@ -81,6 +81,11 @@ fun DashboardContent(
                         type = BrutalButtonType.SECONDARY,
                         enabled = !uiState.isRefreshing
                     )
+                    BrutalButton(
+                        text = "SETTINGS",
+                        onClick = { onEvent(DashboardUiEvent.ShowSettings) },
+                        type = BrutalButtonType.SECONDARY
+                    )
                 }
             )
         }

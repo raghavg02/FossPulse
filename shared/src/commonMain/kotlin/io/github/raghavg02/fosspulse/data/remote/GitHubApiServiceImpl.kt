@@ -176,4 +176,32 @@ class GitHubApiServiceImpl(
             )
         }
     }
+
+    override suspend fun getRateLimit(personalAccessToken: String?): NetworkResult<Int> {
+        return try {
+            val response: HttpResponse = client.get("$BASE_URL/rate_limit") {
+                header("Accept", "application/vnd.github+json")
+                header("X-GitHub-Api-Version", HEADER_API_VERSION)
+                header("User-Agent", USER_AGENT)
+                if (!personalAccessToken.isNullOrBlank()) {
+                    header("Authorization", "Bearer $personalAccessToken")
+                }
+            }
+
+            if (response.status == HttpStatusCode.OK) {
+                val limit = response.headers["x-ratelimit-limit"]?.toIntOrNull() ?: 60
+                NetworkResult.Success(data = limit)
+            } else {
+                NetworkResult.Error(
+                    message = "Rate limit check failed: ${response.status.value}",
+                    statusCode = response.status.value
+                )
+            }
+        } catch (e: Exception) {
+            NetworkResult.Error(
+                message = e.message ?: "Failed to query rate limit",
+                throwable = e
+            )
+        }
+    }
 }

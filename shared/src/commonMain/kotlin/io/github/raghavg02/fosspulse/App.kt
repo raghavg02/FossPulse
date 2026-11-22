@@ -46,6 +46,13 @@ fun App() {
                     )
                 }
 
+                // Settings Screen Overlay Screen
+                if (uiState.isSettingsVisible) {
+                    io.github.raghavg02.fosspulse.ui.settings.SettingsScreen(
+                        onNavigateBack = { dashboardViewModel.onEvent(DashboardUiEvent.DismissSettings) }
+                    )
+                }
+
                 // Add Repository Modal Overlay
                 if (uiState.isAddRepoSheetVisible) {
                     Box(

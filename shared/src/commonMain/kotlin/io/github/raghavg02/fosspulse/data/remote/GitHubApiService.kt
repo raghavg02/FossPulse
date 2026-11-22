@@ -12,4 +12,8 @@ interface GitHubApiService {
         includePrereleases: Boolean = false,
         personalAccessToken: String? = null
     ): NetworkResult<ReleaseInfo>
+
+    suspend fun getRateLimit(
+        personalAccessToken: String? = null
+    ): NetworkResult<Int>
 }

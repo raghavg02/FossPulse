@@ -18,10 +18,12 @@ data class HourlyCheckSummary(
 class CheckHourlyReleaseUpdatesUseCase(
     private val repoRepository: RepoRepository,
     private val gitHubApiService: GitHubApiService,
-    private val notifier: PlatformNotifier = PlatformNotifier()
+    private val notifier: PlatformNotifier = PlatformNotifier(),
+    private val secureStorage: io.github.raghavg02.fosspulse.platform.storage.SecureStorage = io.github.raghavg02.fosspulse.platform.storage.SecureStorage()
 ) {
     suspend operator fun invoke(): HourlyCheckSummary {
         val repos = repoRepository.getAllActiveRepos()
+        val pat = secureStorage.get("github_personal_access_token")
         var updateAvailableCount = 0
         var alreadyUpdatedCount = 0
         var binarySuppressedCount = 0
@@ -33,7 +35,8 @@ class CheckHourlyReleaseUpdatesUseCase(
                 repo = repo.repoName,
                 assetRegex = repo.assetRegex,
                 etag = repo.etag,
-                includePrereleases = repo.includePrereleases
+                includePrereleases = repo.includePrereleases,
+                personalAccessToken = pat
             )) {
                 is NetworkResult.Success -> {
                     val release = result.data
