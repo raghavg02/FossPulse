@@ -20,6 +20,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import io.github.raghavg02.fosspulse.ui.theme.BrutalColors
 import io.github.raghavg02.fosspulse.ui.theme.BrutalTheme
 import io.github.raghavg02.fosspulse.ui.theme.brutalShadow
 
@@ -67,7 +68,7 @@ fun BrutalButton(
             .brutalShadow(
                 offsetX = shadowOffset,
                 offsetY = shadowOffset,
-                color = BrutalTheme.colors.border,
+                color = BrutalTheme.colors.shadow,
                 cornerRadius = 4.dp
             )
             .clip(shape)
@@ -82,10 +83,16 @@ fun BrutalButton(
             .padding(horizontal = 16.dp, vertical = 12.dp),
         contentAlignment = Alignment.Center
     ) {
+        val textColor = when (type) {
+            BrutalButtonType.PRIMARY -> BrutalColors.Ink
+            BrutalButtonType.SECONDARY -> BrutalTheme.colors.ink
+            BrutalButtonType.DANGER -> Color.White
+        }
+
         Text(
             text = text.uppercase(),
             style = BrutalTheme.typography.Button,
-            color = if (type == BrutalButtonType.DANGER) Color.White else BrutalTheme.colors.ink
+            color = textColor
         )
     }
 }

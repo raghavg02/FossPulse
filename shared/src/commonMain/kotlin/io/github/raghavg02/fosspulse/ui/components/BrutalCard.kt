@@ -40,7 +40,7 @@ fun BrutalCard(
             .brutalShadow(
                 offsetX = shadowOffset,
                 offsetY = shadowOffset,
-                color = borderColor,
+                color = BrutalTheme.colors.shadow,
                 cornerRadius = cornerRadius
             )
             .clip(shape)

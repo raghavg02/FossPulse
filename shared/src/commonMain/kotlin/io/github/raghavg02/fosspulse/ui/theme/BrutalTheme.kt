@@ -16,10 +16,12 @@ data class BrutalColorPalette(
     val secondary: Color,
     val ink: Color,
     val border: Color,
+    val shadow: Color,
     val muted: Color,
     val success: Color,
     val warning: Color,
-    val error: Color
+    val error: Color,
+    val isDark: Boolean = false
 )
 
 val LocalBrutalColors = staticCompositionLocalOf {
@@ -30,10 +32,12 @@ val LocalBrutalColors = staticCompositionLocalOf {
         secondary = BrutalColors.ElectricLavender,
         ink = BrutalColors.Ink,
         border = BrutalColors.Ink,
+        shadow = BrutalColors.ShadowLight,
         muted = BrutalColors.MutedText,
         success = BrutalColors.MintGreen,
         warning = BrutalColors.SignalTangerine,
-        error = BrutalColors.RawCrimson
+        error = BrutalColors.RawCrimson,
+        isDark = false
     )
 }
 
@@ -48,12 +52,14 @@ fun BrutalTheme(
             surface = BrutalColors.SurfaceDark,
             primary = BrutalColors.CyberYellow,
             secondary = BrutalColors.ElectricLavender,
-            ink = BrutalColors.Ink,
+            ink = BrutalColors.InkDark,
             border = BrutalColors.InkDarkBorder,
+            shadow = BrutalColors.ShadowDark,
             muted = BrutalColors.MutedTextDark,
             success = BrutalColors.MintGreen,
             warning = BrutalColors.SignalTangerine,
-            error = BrutalColors.RawCrimson
+            error = BrutalColors.RawCrimson,
+            isDark = true
         )
     } else {
         BrutalColorPalette(
@@ -63,10 +69,12 @@ fun BrutalTheme(
             secondary = BrutalColors.ElectricLavender,
             ink = BrutalColors.Ink,
             border = BrutalColors.Ink,
+            shadow = BrutalColors.ShadowLight,
             muted = BrutalColors.MutedText,
             success = BrutalColors.MintGreen,
             warning = BrutalColors.SignalTangerine,
-            error = BrutalColors.RawCrimson
+            error = BrutalColors.RawCrimson,
+            isDark = false
         )
     }
 
@@ -75,8 +83,8 @@ fun BrutalTheme(
             primary = colors.primary,
             background = colors.canvas,
             surface = colors.surface,
-            onBackground = colors.border,
-            onSurface = colors.border
+            onBackground = colors.ink,
+            onSurface = colors.ink
         )
     } else {
         lightColorScheme(

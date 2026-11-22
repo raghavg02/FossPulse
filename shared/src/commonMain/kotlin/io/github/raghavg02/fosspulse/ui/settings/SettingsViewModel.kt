@@ -9,16 +9,22 @@ import io.github.raghavg02.fosspulse.domain.model.NetworkResult
 import io.github.raghavg02.fosspulse.domain.usecase.DriveSyncUseCase
 import io.github.raghavg02.fosspulse.platform.auth.GoogleAuthProvider
 import io.github.raghavg02.fosspulse.platform.storage.SecureStorage
+import io.github.raghavg02.fosspulse.ui.theme.ThemeManager
+import io.github.raghavg02.fosspulse.ui.theme.ThemeMode
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 data class SettingsUiState(
+    val themeMode: ThemeMode = ThemeMode.SYSTEM,
+    val isPatToggleOn: Boolean = false,
     val githubPat: String = "",
     val rateLimit: Int? = null,
     val isTestingPat: Boolean = false,
     val patMessage: String? = null,
+    val isPatError: Boolean = false,
+    val isDriveToggleOn: Boolean = false,
     val isDriveConnected: Boolean = false,
     val isDriveSyncing: Boolean = false,
     val driveSyncMessage: String? = null,
@@ -47,7 +53,7 @@ class SettingsViewModel(
 
     init {
         loadInitialState()
-        observeModelStatus()
+        observeThemeAndModelStatus()
     }
 
     private fun loadInitialState() {
@@ -56,9 +62,15 @@ class SettingsViewModel(
         val lastSync = secureStorage.get(LAST_SYNC_KEY)
         val savedClientId = secureStorage.get(GOOGLE_CLIENT_ID_KEY) ?: ""
 
+        val isPatOn = savedPat.isNotBlank()
+        val isDriveOn = !token.isNullOrBlank() || savedClientId.isNotBlank()
+
         _uiState.value = _uiState.value.copy(
+            themeMode = ThemeManager.themeMode.value,
+            isPatToggleOn = isPatOn,
             githubPat = savedPat,
             googleClientId = savedClientId,
+            isDriveToggleOn = isDriveOn,
             isDriveConnected = !token.isNullOrBlank(),
             lastSyncedTime = lastSync,
             formattedModelSize = llmModelManager.getFormattedModelSize()
@@ -71,7 +83,12 @@ class SettingsViewModel(
         }
     }
 
-    private fun observeModelStatus() {
+    private fun observeThemeAndModelStatus() {
+        viewModelScope.launch {
+            ThemeManager.themeMode.collect { mode ->
+                _uiState.value = _uiState.value.copy(themeMode = mode)
+            }
+        }
         viewModelScope.launch {
             llmModelManager.modelStatus.collect { status ->
                 _uiState.value = _uiState.value.copy(
@@ -82,24 +99,95 @@ class SettingsViewModel(
         }
     }
 
+    fun onThemeModeChanged(mode: ThemeMode) {
+        ThemeManager.setThemeMode(mode, secureStorage)
+    }
+
+    fun onPatToggleChanged(enabled: Boolean) {
+        if (!enabled) {
+            secureStorage.remove(GITHUB_PAT_KEY)
+            _uiState.value = _uiState.value.copy(
+                isPatToggleOn = false,
+                githubPat = "",
+                rateLimit = 60,
+                patMessage = null,
+                isPatError = false
+            )
+            testPat(null)
+        } else {
+            _uiState.value = _uiState.value.copy(isPatToggleOn = true)
+        }
+    }
+
     fun onPatChanged(pat: String) {
-        _uiState.value = _uiState.value.copy(githubPat = pat, patMessage = null)
+        _uiState.value = _uiState.value.copy(githubPat = pat, patMessage = null, isPatError = false)
     }
 
     fun saveAndTestPat() {
         val pat = _uiState.value.githubPat.trim()
-        if (pat.isNotBlank()) {
-            secureStorage.save(GITHUB_PAT_KEY, pat)
-        } else {
-            secureStorage.remove(GITHUB_PAT_KEY)
+        if (pat.isBlank()) {
+            _uiState.value = _uiState.value.copy(
+                patMessage = "Enter a GitHub PAT first",
+                isPatError = true
+            )
+            return
         }
-        testPat(if (pat.isNotBlank()) pat else null)
+
+        secureStorage.save(GITHUB_PAT_KEY, pat)
+        testPat(pat)
     }
 
     fun clearPat() {
         secureStorage.remove(GITHUB_PAT_KEY)
-        _uiState.value = _uiState.value.copy(githubPat = "", patMessage = "Token cleared")
+        _uiState.value = _uiState.value.copy(
+            githubPat = "",
+            patMessage = "Token cleared",
+            isPatError = false
+        )
         testPat(null)
+    }
+
+    private fun testPat(pat: String?) {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isTestingPat = true)
+            when (val result = gitHubApiService.getRateLimit(pat)) {
+                is NetworkResult.Success -> {
+                    _uiState.value = _uiState.value.copy(
+                        isTestingPat = false,
+                        rateLimit = result.data,
+                        isPatError = false,
+                        patMessage = if (pat != null) "Valid PAT: ${result.data} requests/hr" else "Default rate limit: ${result.data} requests/hr"
+                    )
+                }
+                is NetworkResult.Error -> {
+                    _uiState.value = _uiState.value.copy(
+                        isTestingPat = false,
+                        rateLimit = 60,
+                        isPatError = pat != null,
+                        patMessage = if (pat != null) "Invalid PAT: ${result.message}" else "Default rate limit: 60 requests/hr"
+                    )
+                }
+                else -> {
+                    _uiState.value = _uiState.value.copy(isTestingPat = false)
+                }
+            }
+        }
+    }
+
+    fun onDriveToggleChanged(enabled: Boolean) {
+        if (!enabled) {
+            disconnectDrive()
+            _uiState.value = _uiState.value.copy(
+                isDriveToggleOn = false,
+                isDriveConnected = false,
+                driveSyncMessage = "Local-only mode active"
+            )
+        } else {
+            _uiState.value = _uiState.value.copy(
+                isDriveToggleOn = true,
+                driveSyncMessage = null
+            )
+        }
     }
 
     fun onGoogleClientIdChanged(clientId: String) {
@@ -117,36 +205,11 @@ class SettingsViewModel(
         }
     }
 
-    private fun testPat(pat: String?) {
-        viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isTestingPat = true)
-            when (val result = gitHubApiService.getRateLimit(pat)) {
-                is NetworkResult.Success -> {
-                    _uiState.value = _uiState.value.copy(
-                        isTestingPat = false,
-                        rateLimit = result.data,
-                        patMessage = if (pat != null) "Valid PAT: ${result.data} requests/hr" else "Default rate limit: ${result.data} requests/hr"
-                    )
-                }
-                is NetworkResult.Error -> {
-                    _uiState.value = _uiState.value.copy(
-                        isTestingPat = false,
-                        rateLimit = 60,
-                        patMessage = "Error: ${result.message}"
-                    )
-                }
-                else -> {
-                    _uiState.value = _uiState.value.copy(isTestingPat = false)
-                }
-            }
-        }
-    }
-
     fun connectDrive() {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isDriveSyncing = true, driveSyncMessage = null)
             val authResult = googleAuthProvider.signIn()
-            authResult.onSuccess { res ->
+            authResult.onSuccess {
                 _uiState.value = _uiState.value.copy(
                     isDriveConnected = true,
                     isDriveSyncing = false,
@@ -185,11 +248,11 @@ class SettingsViewModel(
             _uiState.value = _uiState.value.copy(isDriveSyncing = true, driveSyncMessage = "Syncing with Google Drive...")
             val result = driveSyncUseCase.execute(token)
             result.onSuccess { payload ->
-                val timeStr = "${payload.repos.size} repos synced at ${payload.syncedAt}"
+                val timeStr = "${payload.repos.size} repos synced"
                 secureStorage.save(LAST_SYNC_KEY, timeStr)
                 _uiState.value = _uiState.value.copy(
                     isDriveSyncing = false,
-                    driveSyncMessage = "Sync successful (${payload.repos.size} repos synced)",
+                    driveSyncMessage = "Sync successful ($timeStr)",
                     lastSyncedTime = timeStr
                 )
             }.onFailure { err ->

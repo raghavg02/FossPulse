@@ -19,20 +19,35 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
+enum class ScannerFilterTab {
+    MATCHED_FOSS,
+    ALL_INSTALLED
+}
+
 data class ScannerUiState(
     val isLoading: Boolean = true,
+    val filterTab: ScannerFilterTab = ScannerFilterTab.MATCHED_FOSS,
     val deviceAbi: String = detectDeviceAbi(),
     val searchQuery: String = "",
     val apps: List<ScannedApp> = emptyList(),
     val isImporting: Boolean = false,
     val errorMessage: String? = null
 ) {
+    val matchedFossCount: Int
+        get() = apps.count { it.isKnownFoss }
+
+    val totalInstalledCount: Int
+        get() = apps.size
+
     val filteredApps: List<ScannedApp>
-        get() = if (searchQuery.isBlank()) {
-            apps
-        } else {
+        get() {
+            val base = when (filterTab) {
+                ScannerFilterTab.MATCHED_FOSS -> apps.filter { it.isKnownFoss }
+                ScannerFilterTab.ALL_INSTALLED -> apps
+            }
+            if (searchQuery.isBlank()) return base
             val q = searchQuery.trim().lowercase()
-            apps.filter {
+            return base.filter {
                 it.appName.lowercase().contains(q) ||
                 it.packageName.lowercase().contains(q) ||
                 it.githubRepoId.lowercase().contains(q)
@@ -77,6 +92,10 @@ class InstalledAppsScannerViewModel(
                 )
             }
         }
+    }
+
+    fun onFilterTabChanged(tab: ScannerFilterTab) {
+        _uiState.update { it.copy(filterTab = tab) }
     }
 
     fun onSearchQueryChanged(query: String) {

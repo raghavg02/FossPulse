@@ -9,5 +9,6 @@ data class ScannedApp(
     val repoName: String,
     val suggestedRegex: String,
     val isAlreadyTracked: Boolean = false,
-    val isSelected: Boolean = !isAlreadyTracked
+    val isSelected: Boolean = !isAlreadyTracked,
+    val isKnownFoss: Boolean = true
 )

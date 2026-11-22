@@ -22,6 +22,14 @@ class FossPackageCatalogTest {
         val vlcMapping = FossPackageCatalog.findMapping("org.videolan.vlc")
         assertNotNull(vlcMapping)
         assertEquals("videolan/vlc-android", vlcMapping.repoId)
+
+        val affineMapping = FossPackageCatalog.findMapping("pro.affine.app")
+        assertNotNull(affineMapping)
+        assertEquals("toeverything/affine", affineMapping.repoId)
+
+        val sealMapping = FossPackageCatalog.findMapping("com.junkfood.seal")
+        assertNotNull(sealMapping)
+        assertEquals("junkfood02/seal", sealMapping.repoId)
     }
 
     @Test

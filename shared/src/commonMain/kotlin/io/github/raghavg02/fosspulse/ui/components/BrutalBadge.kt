@@ -46,10 +46,18 @@ fun BrutalBadge(
             .padding(horizontal = 6.dp, vertical = 2.dp),
         contentAlignment = Alignment.Center
     ) {
+        val textColor = when (style) {
+            BrutalBadgeStyle.UP_TO_DATE,
+            BrutalBadgeStyle.UPDATE_READY,
+            BrutalBadgeStyle.PLATFORM -> io.github.raghavg02.fosspulse.ui.theme.BrutalColors.Ink
+            BrutalBadgeStyle.NEUTRAL -> BrutalTheme.colors.ink
+            BrutalBadgeStyle.ERROR -> Color.White
+        }
+
         Text(
             text = text.uppercase(),
             style = BrutalTheme.typography.MonoSmall,
-            color = if (style == BrutalBadgeStyle.ERROR) Color.White else BrutalTheme.colors.ink
+            color = textColor
         )
     }
 }

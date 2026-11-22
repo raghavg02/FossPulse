@@ -64,11 +64,11 @@ fun BrutalTextField(
                         .brutalShadow(
                             offsetX = 3.dp,
                             offsetY = 3.dp,
-                            color = BrutalTheme.colors.border,
+                            color = BrutalTheme.colors.shadow,
                             cornerRadius = 4.dp
                         )
                         .clip(shape)
-                        .background(Color.White, shape)
+                        .background(BrutalTheme.colors.surface, shape)
                         .border(2.dp, if (errorMessage != null) BrutalTheme.colors.error else BrutalTheme.colors.border, shape)
                         .padding(horizontal = 12.dp, vertical = 12.dp)
                 ) {

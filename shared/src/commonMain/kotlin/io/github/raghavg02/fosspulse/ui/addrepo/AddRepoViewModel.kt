@@ -17,6 +17,8 @@ import kotlinx.coroutines.launch
 data class AddRepoUiState(
     val repoInput: String = "",
     val displayName: String = "",
+    val androidPackageName: String? = null,
+    val installedVersion: String? = null,
     val targetPlatform: TargetPlatform = TargetPlatform.ANDROID,
     val assetRegex: String = defaultRegexForPlatform(TargetPlatform.ANDROID),
     val includePrereleases: Boolean = false,
@@ -42,6 +44,17 @@ class AddRepoViewModel(
 
     private val _uiState = MutableStateFlow(AddRepoUiState())
     val uiState: StateFlow<AddRepoUiState> = _uiState.asStateFlow()
+
+    fun prefillFromApp(displayName: String, packageName: String, installedVersion: String?) {
+        _uiState.value = AddRepoUiState(
+            repoInput = "",
+            displayName = displayName,
+            androidPackageName = packageName,
+            installedVersion = installedVersion,
+            targetPlatform = TargetPlatform.ANDROID,
+            assetRegex = AddRepoUiState.defaultRegexForPlatform(TargetPlatform.ANDROID)
+        )
+    }
 
     fun onRepoInputChanged(input: String) {
         val cleaned = cleanRepoInput(input)
@@ -122,6 +135,8 @@ class AddRepoViewModel(
                 owner = owner,
                 repoName = repoName,
                 displayName = displayName,
+                androidPackageName = currentState.androidPackageName,
+                installedVersion = currentState.installedVersion,
                 targetPlatform = currentState.targetPlatform,
                 assetRegex = currentState.assetRegex,
                 includePrereleases = currentState.includePrereleases

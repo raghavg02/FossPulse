@@ -43,7 +43,9 @@ val appModule = module {
     }
 
     single<SecureStorage> {
-        SecureStorage()
+        SecureStorage().also {
+            io.github.raghavg02.fosspulse.ui.theme.ThemeManager.init(it)
+        }
     }
 
     single<GitHubApiService> {

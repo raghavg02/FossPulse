@@ -36,9 +36,14 @@ actual class PlatformModelStorage actual constructor() {
     }
 
     actual suspend fun writeChunk(fileName: String, bytes: ByteArray, append: Boolean) = withContext(Dispatchers.IO) {
-        val file = File(modelsDir, fileName)
+        val dir = modelsDir
+        if (!dir.exists()) {
+            dir.mkdirs()
+        }
+        val file = File(dir, fileName)
         FileOutputStream(file, append).use { fos ->
             fos.write(bytes)
+            fos.flush()
         }
     }
 }

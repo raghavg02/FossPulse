@@ -35,17 +35,17 @@ class LlmModelManager(
 ) {
     companion object {
         val DEFAULT_MODEL = LlmModelInfo(
-            name = "Qwen2.5 0.5B Instruct (Q4_K_M)",
-            fileName = "qwen2.5-0.5b-instruct-q4_k_m.gguf",
-            downloadUrl = "https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct-GGUF/resolve/main/qwen2.5-0.5b-instruct-q4_k_m.gguf",
-            estimatedSizeBytes = 397_747_200L // ~379 MiB
-        )
-
-        val LARGE_MODEL = LlmModelInfo(
             name = "Qwen2.5 1.5B Instruct (Q4_K_M)",
             fileName = "qwen2.5-1.5b-instruct-q4_k_m.gguf",
             downloadUrl = "https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct-GGUF/resolve/main/qwen2.5-1.5b-instruct-q4_k_m.gguf",
             estimatedSizeBytes = 986_000_000L // ~940 MiB
+        )
+
+        val SMALL_MODEL = LlmModelInfo(
+            name = "Qwen2.5 0.5B Instruct (Q4_K_M)",
+            fileName = "qwen2.5-0.5b-instruct-q4_k_m.gguf",
+            downloadUrl = "https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct-GGUF/resolve/main/qwen2.5-0.5b-instruct-q4_k_m.gguf",
+            estimatedSizeBytes = 397_747_200L // ~379 MiB
         )
     }
 
@@ -108,7 +108,7 @@ class LlmModelManager(
             val totalBytes = response.contentLength() ?: activeModel.estimatedSizeBytes
             val channel: ByteReadChannel = response.bodyAsChannel()
             var downloadedBytes = 0L
-            val buffer = ByteArray(64 * 1024)
+            val buffer = ByteArray(256 * 1024)
             var append = false
 
             while (!channel.isClosedForRead) {
@@ -126,9 +126,10 @@ class LlmModelManager(
 
             refreshStatus()
             Result.success(Unit)
-        } catch (e: Exception) {
-            _modelStatus.value = LlmModelStatus.Error(e.message ?: "Download failed")
-            Result.failure(e)
+        } catch (t: Throwable) {
+            val message = t.message ?: "Download failed"
+            _modelStatus.value = LlmModelStatus.Error(message)
+            Result.failure(t)
         }
     }
 }

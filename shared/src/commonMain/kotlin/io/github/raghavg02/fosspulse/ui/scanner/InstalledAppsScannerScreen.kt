@@ -12,10 +12,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -24,7 +25,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import io.github.raghavg02.fosspulse.domain.scanner.ScannedApp
 import io.github.raghavg02.fosspulse.ui.components.BrutalBadge
@@ -35,12 +35,12 @@ import io.github.raghavg02.fosspulse.ui.components.BrutalCard
 import io.github.raghavg02.fosspulse.ui.components.BrutalTextField
 import io.github.raghavg02.fosspulse.ui.components.BrutalTopBar
 import io.github.raghavg02.fosspulse.ui.theme.BrutalTheme
-import io.github.raghavg02.fosspulse.ui.theme.brutalShadow
 
 @Composable
 fun InstalledAppsScannerScreen(
     viewModel: InstalledAppsScannerViewModel,
     onBackClick: () -> Unit,
+    onLinkApp: ((ScannedApp) -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val state by viewModel.uiState.collectAsState()
@@ -52,13 +52,10 @@ fun InstalledAppsScannerScreen(
             BrutalTopBar(
                 title = "Scan Installed Apps",
                 actions = {
-                    Text(
-                        text = "[BACK]",
-                        style = BrutalTheme.typography.Button,
-                        color = BrutalTheme.colors.ink,
-                        modifier = Modifier
-                            .clickable { onBackClick() }
-                            .padding(8.dp)
+                    BrutalButton(
+                        text = "BACK",
+                        onClick = onBackClick,
+                        type = BrutalButtonType.SECONDARY
                     )
                 }
             )
@@ -105,57 +102,74 @@ fun InstalledAppsScannerScreen(
                     }
                 }
 
+                // Filter Tabs: MATCHED FOSS vs ALL INSTALLED
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    BrutalButton(
+                        text = "MATCHED FOSS (${state.matchedFossCount})",
+                        onClick = { viewModel.onFilterTabChanged(ScannerFilterTab.MATCHED_FOSS) },
+                        type = if (state.filterTab == ScannerFilterTab.MATCHED_FOSS) BrutalButtonType.PRIMARY else BrutalButtonType.SECONDARY,
+                        modifier = Modifier.weight(1f)
+                    )
+                    BrutalButton(
+                        text = "ALL INSTALLED (${state.totalInstalledCount})",
+                        onClick = { viewModel.onFilterTabChanged(ScannerFilterTab.ALL_INSTALLED) },
+                        type = if (state.filterTab == ScannerFilterTab.ALL_INSTALLED) BrutalButtonType.PRIMARY else BrutalButtonType.SECONDARY,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+
                 // Search field
                 BrutalTextField(
                     value = state.searchQuery,
                     onValueChange = viewModel::onSearchQueryChanged,
-                    placeholder = "Search scanned applications...",
+                    placeholder = "Search applications...",
                     modifier = Modifier.fillMaxWidth()
                 )
 
-                // Select / Deselect actions
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "MATCHED OPEN-SOURCE APPS (${state.filteredApps.size})",
-                        style = BrutalTheme.typography.Button,
-                        color = BrutalTheme.colors.ink
-                    )
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                // Select / Deselect actions (visible for matched FOSS or bulk selection)
+                if (state.filterTab == ScannerFilterTab.MATCHED_FOSS) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
                         Text(
-                            text = "SELECT ALL",
-                            style = BrutalTheme.typography.MonoSmall,
-                            color = BrutalTheme.colors.ink,
-                            modifier = Modifier.clickable { viewModel.selectAll() }
+                            text = "${state.selectedCount} apps selected",
+                            style = BrutalTheme.typography.MonoBadge,
+                            color = BrutalTheme.colors.ink
                         )
-                        Text(
-                            text = "|",
-                            style = BrutalTheme.typography.MonoSmall,
-                            color = BrutalTheme.colors.muted
-                        )
-                        Text(
-                            text = "DESELECT ALL",
-                            style = BrutalTheme.typography.MonoSmall,
-                            color = BrutalTheme.colors.ink,
-                            modifier = Modifier.clickable { viewModel.deselectAll() }
-                        )
+
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text(
+                                text = "[SELECT ALL]",
+                                style = BrutalTheme.typography.Button,
+                                color = BrutalTheme.colors.ink,
+                                modifier = Modifier
+                                    .clickable { viewModel.selectAll() }
+                                    .padding(4.dp)
+                            )
+                            Text(
+                                text = "[DESELECT ALL]",
+                                style = BrutalTheme.typography.Button,
+                                color = BrutalTheme.colors.muted,
+                                modifier = Modifier
+                                    .clickable { viewModel.deselectAll() }
+                                    .padding(4.dp)
+                            )
+                        }
                     }
                 }
 
+                // List of Scanned Apps
                 if (state.isLoading) {
                     Box(
-                        modifier = Modifier.fillMaxSize(),
+                        modifier = Modifier.fillMaxWidth().weight(1f),
                         contentAlignment = Alignment.Center
                     ) {
-                        BrutalCard {
-                            Text(
-                                text = "SCANNING INSTALLED PACKAGES...",
-                                style = BrutalTheme.typography.Button
-                            )
-                        }
+                        CircularProgressIndicator(color = BrutalTheme.colors.primary)
                     }
                 } else if (state.filteredApps.isEmpty()) {
                     BrutalCard(
@@ -167,11 +181,14 @@ fun InstalledAppsScannerScreen(
                             verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             Text(
-                                text = "NO MATCHED FOSS APPS FOUND",
+                                text = if (state.filterTab == ScannerFilterTab.MATCHED_FOSS) "NO MATCHED FOSS APPS FOUND" else "NO APPS FOUND",
                                 style = BrutalTheme.typography.H2
                             )
                             Text(
-                                text = "Could not find known open-source apps among your installed packages. You can still track any repository manually from the dashboard.",
+                                text = if (state.filterTab == ScannerFilterTab.MATCHED_FOSS)
+                                    "No pre-mapped open-source apps found among your installed packages. Switch to 'ALL INSTALLED' to link any app to GitHub manually."
+                                else
+                                    "No installed applications match your search query.",
                                 style = BrutalTheme.typography.Body,
                                 color = BrutalTheme.colors.muted
                             )
@@ -185,7 +202,14 @@ fun InstalledAppsScannerScreen(
                         items(state.filteredApps, key = { it.packageName }) { app ->
                             ScannedAppCard(
                                 app = app,
-                                onToggle = { viewModel.toggleSelection(app.packageName) }
+                                onToggle = {
+                                    if (app.isKnownFoss) {
+                                        viewModel.toggleSelection(app.packageName)
+                                    } else {
+                                        onLinkApp?.invoke(app)
+                                    }
+                                },
+                                onLinkClick = { onLinkApp?.invoke(app) }
                             )
                         }
                         item {
@@ -196,7 +220,7 @@ fun InstalledAppsScannerScreen(
             }
 
             // Pinned Bottom Import Button
-            if (state.selectedCount > 0) {
+            if (state.selectedCount > 0 && state.filterTab == ScannerFilterTab.MATCHED_FOSS) {
                 BrutalButton(
                     text = if (state.isImporting) "IMPORTING..." else "IMPORT ${state.selectedCount} APPS",
                     onClick = { viewModel.importSelectedApps(onSuccess = onBackClick) },
@@ -216,6 +240,7 @@ fun InstalledAppsScannerScreen(
 fun ScannedAppCard(
     app: ScannedApp,
     onToggle: () -> Unit,
+    onLinkClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val shape = RoundedCornerShape(4.dp)
@@ -228,66 +253,90 @@ fun ScannedAppCard(
     BrutalCard(
         modifier = modifier
             .fillMaxWidth()
-            .clickable(enabled = !app.isAlreadyTracked) { onToggle() },
-        backgroundColor = if (app.isAlreadyTracked) BrutalTheme.colors.canvas else BrutalTheme.colors.surface,
+            .clickable { onToggle() },
+        backgroundColor = BrutalTheme.colors.surface,
         contentPadding = 12.dp
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Checkbox
-            Box(
-                modifier = Modifier
-                    .clip(shape)
-                    .background(checkBg, shape)
-                    .border(2.dp, BrutalTheme.colors.border, shape)
-                    .padding(horizontal = 8.dp, vertical = 6.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = when {
-                        app.isAlreadyTracked -> "TRACKED"
-                        app.isSelected -> "✓"
-                        else -> " "
-                    },
-                    style = BrutalTheme.typography.MonoSmall,
-                    color = BrutalTheme.colors.ink
-                )
-            }
-
-            // Info column
-            Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
+            Column(modifier = Modifier.weight(1f)) {
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
                         text = app.appName,
-                        style = BrutalTheme.typography.H3,
+                        style = BrutalTheme.typography.Button,
                         color = BrutalTheme.colors.ink
                     )
-                    BrutalBadge(
-                        text = "v${app.installedVersionName}",
-                        style = BrutalBadgeStyle.NEUTRAL
+                    if (app.isAlreadyTracked) {
+                        BrutalBadge(
+                            text = "TRACKED",
+                            style = BrutalBadgeStyle.UP_TO_DATE
+                        )
+                    } else if (!app.isKnownFoss) {
+                        BrutalBadge(
+                            text = "UNMAPPED",
+                            style = BrutalBadgeStyle.NEUTRAL
+                        )
+                    }
+                }
+
+                Text(
+                    text = app.packageName,
+                    style = BrutalTheme.typography.MonoSmall,
+                    color = BrutalTheme.colors.muted
+                )
+
+                if (app.isKnownFoss) {
+                    Text(
+                        text = "GitHub: ${app.githubRepoId}",
+                        style = BrutalTheme.typography.MonoBadge,
+                        color = BrutalTheme.colors.ink
                     )
                 }
 
                 Text(
-                    text = "GitHub: ${app.githubRepoId}",
-                    style = BrutalTheme.typography.MonoSmall,
-                    color = BrutalTheme.colors.ink
-                )
-
-                Text(
-                    text = app.packageName,
+                    text = "Installed: v${app.installedVersionName}",
                     style = BrutalTheme.typography.BodySmall,
                     color = BrutalTheme.colors.muted
+                )
+            }
+
+            if (app.isKnownFoss) {
+                // Checkbox for batch import
+                Box(
+                    modifier = Modifier
+                        .size(28.dp)
+                        .clip(shape)
+                        .background(checkBg, shape)
+                        .border(2.dp, BrutalTheme.colors.border, shape)
+                        .clickable(enabled = !app.isAlreadyTracked) { onToggle() },
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (app.isSelected && !app.isAlreadyTracked) {
+                        Text(
+                            text = "✓",
+                            style = BrutalTheme.typography.H3,
+                            color = io.github.raghavg02.fosspulse.ui.theme.BrutalColors.Ink
+                        )
+                    } else if (app.isAlreadyTracked) {
+                        Text(
+                            text = "—",
+                            style = BrutalTheme.typography.Button,
+                            color = BrutalTheme.colors.muted
+                        )
+                    }
+                }
+            } else {
+                // Button to link to owner/repo
+                BrutalButton(
+                    text = "LINK",
+                    onClick = { onLinkClick?.invoke() },
+                    type = BrutalButtonType.SECONDARY
                 )
             }
         }

@@ -20,7 +20,10 @@ object BrutalColors {
 
     // Ink, Borders & Shadows
     val Ink = Color(0xFF111111) // Pitch Charcoal Black
+    val InkDark = Color(0xFFF7F5EE) // Off-White for Dark Mode text/borders
     val InkDarkBorder = Color(0xFFF7F5EE)
+    val ShadowLight = Color(0xFF111111)
+    val ShadowDark = Color(0xFF000000)
     val MutedText = Color(0xFF4A4A4A) // Dark Slate
     val MutedTextDark = Color(0xFFAAAAAA)
 }
