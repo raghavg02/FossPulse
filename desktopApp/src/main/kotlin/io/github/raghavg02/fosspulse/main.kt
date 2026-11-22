@@ -1,0 +1,13 @@
+package io.github.raghavg02.fosspulse
+
+import androidx.compose.ui.window.Window
+import androidx.compose.ui.window.application
+
+fun main() = application {
+    Window(
+        onCloseRequest = ::exitApplication,
+        title = "FossPulse",
+    ) {
+        App()
+    }
+}
